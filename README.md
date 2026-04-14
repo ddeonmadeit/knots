@@ -55,8 +55,13 @@ locales/       en.default.json
 - Uses Shopify's native AJAX cart (`/cart/add.js`, `/cart/change.js`) instead
   of the Storefront API + Zustand store. No tokens, no CORS, works on your
   custom domain out of the box.
-- Product "creation-order numbering" (`001`, `002`…) is derived from the
-  selected collection's natural order rather than a global `createdAt` sort.
+- Product "creation-order numbering" (`001`, `002`…) is derived from a
+  global `created_at` sort of every product in the store (same logic as
+  the React app). First product added to the store = `001`, second = `002`,
+  etc. The number stays the same no matter which collection it appears in.
+  Note: `collections.all.products` is capped at 50 by default in Liquid; if
+  your store has more products, wrap the sort in a `{% paginate ... by 250 %}`
+  block in `sections/product-grid.liquid`.
 - 404 uses Shopify's built-in template routing.
 - PWA manifest / service worker is not ported (can be added per Shopify's
   guidance if desired).

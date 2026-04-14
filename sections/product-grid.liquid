@@ -5,6 +5,11 @@
     assign coll = collections.all
   endif
   assign products = coll.products
+
+  # Global creation-order numbering: sort every product in the store by
+  # created_at ascending, then look up each displayed product's position.
+  # First product added to the store = 001, second = 002, ...
+  assign all_sorted = collections.all.products | sort: 'created_at'
 -%}
 
 <div class="home-scroll" data-home-scroll>
@@ -23,7 +28,7 @@
       data-max-cols="5"
     >
       {% for product in products limit: section.settings.max_products %}
-        {% render 'product-card', product: product, index: forloop.index0 %}
+        {% render 'product-card', product: product, index: forloop.index0, all_sorted: all_sorted %}
       {% endfor %}
     </div>
   {% endif %}

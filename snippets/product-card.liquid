@@ -8,7 +8,23 @@
     endif
   endfor
 
-  assign num = index | plus: 1
+  # Global creation-order number: find this product's position in a
+  # store-wide list sorted by created_at ascending. First product ever
+  # added to the store = 001, second = 002, etc.
+  # `all_sorted` must be passed in from the parent section (sorted once
+  # per page). If not passed, we fall back to the local grid position.
+  assign num = 0
+  if all_sorted
+    for p in all_sorted
+      if p.handle == product.handle
+        assign num = forloop.index
+        break
+      endif
+    endfor
+  endif
+  if num == 0
+    assign num = index | plus: 1
+  endif
   assign padded = num | prepend: '000' | slice: -3, 3
 
   assign show_numbers = true
