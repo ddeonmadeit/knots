@@ -1,0 +1,47 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Knots",
+    "theme_version": "1.0.0",
+    "theme_author": "Knots",
+    "theme_documentation_url": "https://github.com/ddeonmadeit/knots",
+    "theme_support_url": "https://github.com/ddeonmadeit/knots/issues"
+  },
+  {
+    "name": "Branding",
+    "settings": [
+      {
+        "type": "image_picker",
+        "id": "favicon",
+        "label": "Favicon"
+      }
+    ]
+  },
+  {
+    "name": "Colors",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Ported from Lovable. Values are HSL triplets (no `hsl()` wrapper)."
+      },
+      {
+        "type": "text",
+        "id": "color_background",
+        "label": "Background",
+        "default": "27 100% 97%"
+      },
+      {
+        "type": "text",
+        "id": "color_foreground",
+        "label": "Foreground",
+        "default": "20 12% 18%"
+      },
+      {
+        "type": "text",
+        "id": "color_accent",
+        "label": "Accent",
+        "default": "40 90% 55%"
+      }
+    ]
+  }
+]

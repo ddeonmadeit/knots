@@ -1,0 +1,14 @@
+{
+  "current": {
+    "color_background": "27 100% 97%",
+    "color_foreground": "20 12% 18%",
+    "color_accent": "40 90% 55%"
+  },
+  "presets": {
+    "Default": {
+      "color_background": "27 100% 97%",
+      "color_foreground": "20 12% 18%",
+      "color_accent": "40 90% 55%"
+    }
+  }
+}

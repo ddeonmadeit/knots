@@ -1,0 +1,35 @@
+<div class="simple-list">
+  <h1 class="simple-list__title">Search</h1>
+  <form action="{{ routes.search_url }}" method="get" role="search" style="margin-bottom: 32px;">
+    <input
+      type="search"
+      name="q"
+      value="{{ search.terms | escape }}"
+      placeholder="Search"
+      style="width: 100%; max-width: 320px; border: 0; border-bottom: 1px solid hsla(var(--foreground) / .3); padding: 8px 0; background: transparent; font-family: var(--font-body); font-size: 14px;"
+    >
+  </form>
+
+  {% if search.performed %}
+    {% if search.results.size == 0 %}
+      <p style="color: hsl(var(--muted-foreground)); font-family: var(--font-body); font-size: 12px;">No results for "{{ search.terms }}".</p>
+    {% else %}
+      <div class="product-grid" data-product-grid data-cols="3" data-min-cols="3" data-max-cols="5">
+        {% for item in search.results %}
+          {% if item.object_type == 'product' %}
+            {% render 'product-card', product: item, index: forloop.index0, show_numbers_override: false %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+
+<script src="{{ 'home-grid.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Search",
+  "settings": []
+}
+{% endschema %}

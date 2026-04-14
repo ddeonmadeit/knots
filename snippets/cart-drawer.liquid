@@ -1,0 +1,83 @@
+<button
+  type="button"
+  class="cart-toggle"
+  data-cart-toggle
+  aria-label="{{ 'sections.cart.title' | t }}"
+>
+  {% render 'icon-bag' %}
+  <span class="cart-count" data-cart-count {% if cart.item_count == 0 %}hidden{% endif %}>
+    {{ cart.item_count }}
+  </span>
+</button>
+
+<div class="cart-drawer-overlay" data-cart-overlay></div>
+
+<aside class="cart-drawer" data-cart-drawer aria-label="{{ 'sections.cart.title' | t }}">
+  <button type="button" class="cart-drawer__close" data-cart-close aria-label="{{ 'accessibility.close' | t }}">
+    {% render 'icon-close' %}
+  </button>
+
+  <div class="cart-drawer__heading">
+    <h2 class="cart-drawer__title">{{ 'sections.cart.title' | t }}</h2>
+    <p class="cart-drawer__count" data-cart-status>
+      {% if cart.item_count == 0 -%}
+        {{ 'sections.cart.empty' | t }}
+      {%- else -%}
+        {{ 'sections.cart.items_count' | t: count: cart.item_count }}
+      {%- endif %}
+    </p>
+  </div>
+
+  <div class="cart-drawer__body" data-cart-body>
+    {% if cart.item_count == 0 %}
+      <div class="cart-drawer__empty" data-cart-empty>
+        {% render 'icon-bag' %}
+        <p>{{ 'sections.cart.empty' | t }}</p>
+      </div>
+    {% else %}
+      <div class="cart-drawer__items" data-cart-items>
+        {% for item in cart.items %}
+          <div class="cart-item" data-cart-item data-key="{{ item.key }}" data-variant-id="{{ item.variant_id }}">
+            <div class="cart-item__image">
+              {% if item.image %}
+                <img src="{{ item.image | image_url: width: 200 }}" alt="{{ item.product.title | escape }}" loading="lazy">
+              {% endif %}
+            </div>
+            <div class="cart-item__info">
+              <h4 class="cart-item__title">{{ item.product.title }}</h4>
+              {% unless item.variant.title contains 'Default' %}
+                <p class="cart-item__variant">
+                  {%- for opt in item.variant.selected_options -%}{{ opt.value }}{% unless forloop.last %} / {% endunless %}{%- endfor -%}
+                </p>
+              {% endunless %}
+              <p class="cart-item__price">{{ item.final_price | money_without_trailing_zeros }}</p>
+              <div class="cart-item__controls">
+                <button type="button" class="cart-item__qty-btn" data-qty-decrease aria-label="Decrease">
+                  {% render 'icon-minus' %}
+                </button>
+                <span class="cart-item__qty-value" data-qty-value>{{ item.quantity }}</span>
+                <button type="button" class="cart-item__qty-btn" data-qty-increase aria-label="Increase">
+                  {% render 'icon-plus' %}
+                </button>
+                <button type="button" class="cart-item__remove" data-qty-remove aria-label="Remove">
+                  {% render 'icon-trash' %}
+                </button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="cart-drawer__footer" data-cart-footer>
+        <div class="cart-drawer__total">
+          <span class="cart-drawer__total-label">{{ 'sections.cart.total' | t }}</span>
+          <span class="cart-drawer__total-value" data-cart-total>{{ cart.total_price | money_without_trailing_zeros }}</span>
+        </div>
+        <form action="{{ routes.cart_url }}" method="post" novalidate>
+          <button type="submit" name="checkout" class="cart-drawer__checkout">
+            {{ 'sections.cart.checkout' | t }}
+          </button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+</aside>

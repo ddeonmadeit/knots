@@ -1,0 +1,61 @@
+{%- liquid
+  assign collection_handle = section.settings.collection
+  assign coll = collections[collection_handle]
+  if coll.products.size == 0
+    assign coll = collections.all
+  endif
+  assign products = coll.products
+-%}
+
+<div class="home-scroll" data-home-scroll>
+  <div class="home-spacer"></div>
+
+  {% if products.size == 0 %}
+    <div class="home-state">
+      <p>{{ 'products.index.none' | t }}</p>
+    </div>
+  {% else %}
+    <div
+      class="product-grid"
+      data-product-grid
+      data-cols="{{ section.settings.default_columns | default: 3 }}"
+      data-min-cols="3"
+      data-max-cols="5"
+    >
+      {% for product in products limit: section.settings.max_products %}
+        {% render 'product-card', product: product, index: forloop.index0 %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<script src="{{ 'home-grid.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Product grid",
+  "tag": "div",
+  "settings": [
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection to display"
+    },
+    {
+      "type": "range",
+      "id": "default_columns",
+      "label": "Default columns (desktop)",
+      "min": 3, "max": 5, "step": 1, "default": 3
+    },
+    {
+      "type": "range",
+      "id": "max_products",
+      "label": "Maximum products",
+      "min": 8, "max": 50, "step": 1, "default": 50
+    }
+  ],
+  "presets": [
+    { "name": "Product grid" }
+  ]
+}
+{% endschema %}

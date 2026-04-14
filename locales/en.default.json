@@ -1,0 +1,44 @@
+{
+  "accessibility": {
+    "skip_to_content": "Skip to content",
+    "close": "Close"
+  },
+  "sections": {
+    "header": {
+      "menu": "Menu",
+      "store": "Store",
+      "about": "About",
+      "contact": "Contact"
+    },
+    "cart": {
+      "title": "Bag",
+      "empty": "Your bag is empty",
+      "items_count": {
+        "one": "{{ count }} item",
+        "other": "{{ count }} items"
+      },
+      "total": "Total",
+      "checkout": "Checkout"
+    }
+  },
+  "products": {
+    "product": {
+      "added_to_bag": "Added to Bag",
+      "sold_out": "Sold out",
+      "no_image": "No image"
+    },
+    "index": {
+      "none": "No products found"
+    }
+  },
+  "templates": {
+    "contact": {
+      "form": {
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "message": "Comment"
+      }
+    }
+  }
+}

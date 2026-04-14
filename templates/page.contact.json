@@ -1,0 +1,13 @@
+{
+  "sections": {
+    "main": {
+      "type": "page-contact",
+      "settings": {
+        "title": "Contact",
+        "social_label": "Stay Connected",
+        "instagram_url": "https://www.instagram.com/knots.raw"
+      }
+    }
+  },
+  "order": ["main"]
+}

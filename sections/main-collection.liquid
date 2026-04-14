@@ -1,0 +1,24 @@
+<div class="home-scroll">
+  <div class="home-spacer"></div>
+
+  {% if collection.products.size == 0 %}
+    <div class="home-state">
+      <p>{{ 'products.index.none' | t }}</p>
+    </div>
+  {% else %}
+    <div class="product-grid" data-product-grid data-cols="3" data-min-cols="3" data-max-cols="5">
+      {% for product in collection.products %}
+        {% render 'product-card', product: product, index: forloop.index0, show_numbers_override: false %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<script src="{{ 'home-grid.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Collection",
+  "settings": []
+}
+{% endschema %}

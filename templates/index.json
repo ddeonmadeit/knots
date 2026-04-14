@@ -1,0 +1,12 @@
+{
+  "sections": {
+    "product_grid": {
+      "type": "product-grid",
+      "settings": {
+        "default_columns": 3,
+        "max_products": 50
+      }
+    }
+  },
+  "order": ["product_grid"]
+}

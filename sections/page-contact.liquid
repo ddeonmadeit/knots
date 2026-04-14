@@ -1,0 +1,68 @@
+{%- liquid
+  assign title = section.settings.title | default: page.title
+  assign social = section.settings.social_label
+  assign ig_url = section.settings.instagram_url
+-%}
+<div class="text-page">
+  <main class="text-page__main">
+    <h1 class="text-page__title">{{ title }}</h1>
+
+    <div class="contact-social">
+      <p>{{ social | default: 'Stay Connected' }}</p>
+      {%- if ig_url != blank -%}
+        <a href="{{ ig_url }}" target="_blank" rel="noopener noreferrer">Instagram</a>
+      {%- endif -%}
+    </div>
+
+    {% form 'contact', class: 'contact-form', data-contact-form: true %}
+      {%- if form.posted_successfully? -%}
+        <p class="contact-form__status is-success">Message sent! We'll get back to you soon.</p>
+      {%- endif -%}
+      {%- if form.errors -%}
+        <p class="contact-form__status is-error">
+          {{ form.errors | default_errors }}
+        </p>
+      {%- endif -%}
+
+      <div class="contact-form__field">
+        <label for="ContactName">Name</label>
+        <input type="text" id="ContactName" name="contact[{{ 'templates.contact.form.name' | t }}]" autocomplete="name">
+      </div>
+
+      <div class="contact-form__field">
+        <label for="ContactEmail">Email <span style="color: hsl(var(--muted-foreground));">*</span></label>
+        <input type="email" id="ContactEmail" name="contact[email]" required autocomplete="email">
+      </div>
+
+      <div class="contact-form__field">
+        <label for="ContactPhone">Phone number</label>
+        <input type="tel" id="ContactPhone" name="contact[{{ 'templates.contact.form.phone' | t }}]" autocomplete="tel">
+      </div>
+
+      <div class="contact-form__field">
+        <label for="ContactMessage">Comment <span style="color: hsl(var(--muted-foreground));">*</span></label>
+        <textarea id="ContactMessage" name="contact[body]" rows="4" required></textarea>
+      </div>
+
+      <button type="submit" class="contact-form__submit">Send</button>
+    {% endform %}
+  </main>
+
+  <div class="explore-btn-wrap">
+    <a href="{{ routes.root_url }}" class="explore-btn">Explore</a>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Contact page",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Title", "default": "Contact" },
+    { "type": "text", "id": "social_label", "label": "Social line", "default": "Stay Connected" },
+    { "type": "url", "id": "instagram_url", "label": "Instagram URL" }
+  ],
+  "presets": [
+    { "name": "Contact page" }
+  ]
+}
+{% endschema %}

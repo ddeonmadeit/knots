@@ -1,0 +1,14 @@
+{
+  "type": "header",
+  "name": "Header group",
+  "sections": {
+    "header": {
+      "type": "header",
+      "settings": {
+        "sticky": true,
+        "glass_effect": true
+      }
+    }
+  },
+  "order": ["header"]
+}

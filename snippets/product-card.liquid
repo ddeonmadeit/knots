@@ -1,0 +1,56 @@
+{%- liquid
+  assign img = product.featured_image
+  assign is_sold_out = true
+  for v in product.variants
+    if v.available
+      assign is_sold_out = false
+      break
+    endif
+  endfor
+
+  assign num = index | plus: 1
+  assign padded = num | prepend: '000' | slice: -3, 3
+
+  assign show_numbers = true
+  if show_numbers_override == false
+    assign show_numbers = false
+  endif
+-%}
+
+<a
+  href="{{ product.url }}"
+  class="product-card"
+  style="animation-delay: {{ index | times: 30 }}ms;"
+>
+  <div class="product-card__inner">
+    <div class="product-card__image-wrap">
+      {%- if img -%}
+        <img
+          class="product-card__image"
+          src="{{ img | image_url: width: 600 }}"
+          srcset="
+            {{ img | image_url: width: 300 }} 300w,
+            {{ img | image_url: width: 600 }} 600w,
+            {{ img | image_url: width: 900 }} 900w
+          "
+          sizes="(max-width: 640px) 50vw, 25vw"
+          alt="{{ img.alt | default: product.title | escape }}"
+          loading="{% if index < 9 %}eager{% else %}lazy{% endif %}"
+          draggable="false"
+          decoding="async"
+        >
+      {%- else -%}
+        <div style="color: hsl(var(--muted-foreground)); font-size: 10px; text-transform: uppercase; letter-spacing: .15em;">
+          No image
+        </div>
+      {%- endif -%}
+    </div>
+    <p class="product-card__name{% if is_sold_out %} is-sold-out{% endif %}">
+      {%- if show_numbers -%}
+        {{ padded }}
+      {%- else -%}
+        {{ product.title }}
+      {%- endif -%}
+    </p>
+  </div>
+</a>

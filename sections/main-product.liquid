@@ -1,0 +1,256 @@
+{%- liquid
+  assign collection_handle = section.settings.collection
+  assign coll = collections[collection_handle]
+  if coll.products.size == 0
+    assign coll = collections.all
+  endif
+  assign nav_products = coll.products
+  assign mystery_handle = section.settings.mystery_handle | default: ''
+  assign is_mystery = false
+  if product.handle == mystery_handle
+    assign is_mystery = true
+  endif
+-%}
+
+<div class="pdp" data-pdp data-product-handle="{{ product.handle }}">
+  <div class="pdp__header-wrap">
+    <!-- header rendered from layout; this just reserves space for the fixed header -->
+  </div>
+
+  <div class="pdp__body" data-pdp-body>
+    <!-- Image area -->
+    <div class="pdp__image-area" data-image-area>
+      <div class="pdp__image-stage" data-image-stage>
+        {%- assign first_image = product.featured_image -%}
+        {%- if first_image -%}
+          <img
+            class="pdp__image"
+            data-pdp-image
+            src="{{ first_image | image_url: width: 1400 }}"
+            alt="{{ first_image.alt | default: product.title | escape }}"
+            draggable="false"
+            loading="eager"
+            decoding="async"
+          >
+        {%- endif -%}
+      </div>
+
+      {%- if product.images.size > 1 -%}
+        <div class="pdp__dots" data-pdp-dots>
+          {%- for img in product.images -%}
+            <span class="pdp__dot{% if forloop.first %} is-active{% endif %}" data-dot="{{ forloop.index0 }}"></span>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+
+    <!-- Bottom bar: title / price / buttons -->
+    <div class="pdp__bottom-bar">
+      <div class="pdp__product-info">
+        <p class="pdp__product-title">{{ product.title }}</p>
+        <p class="pdp__product-price">{{ product.price | money_without_trailing_zeros }}</p>
+      </div>
+
+      <div class="pdp__actions">
+        <button type="button" class="pdp__action-btn" data-toggle-sizes aria-label="Show options">
+          <span data-sizes-plus>{% render 'icon-plus' %}</span>
+          <span data-sizes-minus hidden>{% render 'icon-minus' %}</span>
+        </button>
+        <button type="button" class="pdp__action-btn" data-toggle-details aria-label="Show details">
+          <span data-details-on>{% render 'icon-eye' %}</span>
+          <span data-details-off hidden>{% render 'icon-eye-off' %}</span>
+        </button>
+        {%- if is_mystery -%}
+          <button type="button" class="pdp__action-btn" data-toggle-mystery aria-label="Show mystery items">
+            {% render 'icon-help' %}
+          </button>
+        {%- endif -%}
+      </div>
+    </div>
+
+    <!-- Panels -->
+    <div class="pdp__panels" data-pdp-panels hidden>
+      <!-- Sizes / variant picker -->
+      <div class="pdp__sizes" data-pdp-sizes hidden>
+        <div class="pdp__added-message" data-added-message>
+          <p data-added-text>Added to Bag</p>
+        </div>
+
+        {%- assign all_unavailable = true -%}
+        {%- for v in product.variants -%}
+          {%- if v.available -%}{%- assign all_unavailable = false -%}{%- endif -%}
+        {%- endfor -%}
+
+        {%- if all_unavailable -%}
+          <div class="pdp__sold-out">
+            <p>SOLD OUT</p>
+          </div>
+        {%- else -%}
+          <div data-pdp-options>
+            {%- for option in product.options_with_values -%}
+              {%- if option.name != 'Title' -%}
+                <div class="pdp__option" data-option-index="{{ forloop.index0 }}" data-option-name="{{ option.name | escape }}">
+                  <label class="pdp__option-label">{{ option.name }}</label>
+                  <div class="pdp__option-values">
+                    {%- for v in option.values -%}
+                      <button
+                        type="button"
+                        class="pdp__variant-btn"
+                        data-option-value="{{ v | escape }}"
+                      >{{ v }}</button>
+                    {%- endfor -%}
+                  </div>
+                </div>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+
+        <!-- Variant map for JS (variantId => {available, optionsJson}) -->
+        <script type="application/json" data-variant-map>
+          [
+            {%- for v in product.variants -%}
+              {
+                "id": {{ v.id | json }},
+                "gid": "gid://shopify/ProductVariant/{{ v.id }}",
+                "title": {{ v.title | json }},
+                "price": {{ v.price | json }},
+                "available": {{ v.available | json }},
+                "options": {{ v.selected_options | json }}
+              }{% unless forloop.last %},{% endunless %}
+            {%- endfor -%}
+          ]
+        </script>
+      </div>
+
+      <!-- Details / accordions -->
+      <div class="pdp__details" data-pdp-details hidden>
+        <div class="pdp__accordion" data-accordion data-open="true">
+          <button type="button" class="pdp__accordion-btn">
+            STATS
+            {% render 'icon-chevron-down' %}
+          </button>
+          <div class="pdp__accordion-content">
+            {%- if product.description != blank -%}
+              {{ product.description }}
+            {%- else -%}
+              <p>No details available.</p>
+            {%- endif -%}
+          </div>
+        </div>
+        <div class="pdp__accordion" data-accordion data-open="true">
+          <button type="button" class="pdp__accordion-btn">
+            SHIPPING
+            {% render 'icon-chevron-down' %}
+          </button>
+          <div class="pdp__accordion-content">
+            <p>{{ section.settings.shipping_text | default: 'Our estimated domestic shipping time is <strong>7-12 days</strong> depending on delays.' }}</p>
+          </div>
+        </div>
+      </div>
+
+      {%- if is_mystery -%}
+        {%- assign mystery_list = section.settings.mystery_collection | default: collection_handle -%}
+        {%- assign mystery_coll = collections[mystery_list] -%}
+        <div class="pdp__mystery" data-pdp-mystery hidden>
+          <div class="pdp__mystery-track">
+            <div class="pdp__mystery-inner">
+              {%- for p in mystery_coll.products limit: 10 -%}
+                <a href="{{ p.url }}" class="pdp__mystery-item">
+                  <div class="pdp__mystery-item-image">
+                    {%- if p.featured_image -%}
+                      <img src="{{ p.featured_image | image_url: width: 200 }}" alt="{{ p.title | escape }}" draggable="false">
+                    {%- endif -%}
+                  </div>
+                  <p class="pdp__mystery-item-price">{{ p.price | money_without_trailing_zeros }}</p>
+                </a>
+              {%- endfor -%}
+              <!-- duplicated for seamless loop -->
+              {%- for p in mystery_coll.products limit: 10 -%}
+                <a href="{{ p.url }}" class="pdp__mystery-item">
+                  <div class="pdp__mystery-item-image">
+                    {%- if p.featured_image -%}
+                      <img src="{{ p.featured_image | image_url: width: 200 }}" alt="{{ p.title | escape }}" draggable="false">
+                    {%- endif -%}
+                  </div>
+                  <p class="pdp__mystery-item-price">{{ p.price | money_without_trailing_zeros }}</p>
+                </a>
+              {%- endfor -%}
+            </div>
+          </div>
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+
+  <!-- Vertical nav indicator (shows position in collection) -->
+  {%- assign current_idx = 0 -%}
+  {%- assign total = nav_products.size -%}
+  {%- for p in nav_products -%}
+    {%- if p.handle == product.handle -%}
+      {%- assign current_idx = forloop.index0 -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if total > 1 -%}
+    <div class="pdp__product-indicators" data-pdp-indicators>
+      {%- for p in nav_products -%}
+        <span class="pdp__product-indicator{% if forloop.index0 == current_idx %} is-current{% endif %}" data-index="{{ forloop.index0 }}"></span>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+
+  <!-- Product images JSON for JS -->
+  <script type="application/json" data-pdp-images>
+    [
+      {%- for img in product.images -%}
+        { "url": {{ img | image_url: width: 1400 | json }}, "alt": {{ img.alt | default: product.title | json }} }{% unless forloop.last %},{% endunless %}
+      {%- endfor -%}
+    ]
+  </script>
+
+  <!-- Collection navigation list -->
+  <script type="application/json" data-pdp-nav>
+    [
+      {%- for p in nav_products -%}
+        { "handle": {{ p.handle | json }}, "url": {{ p.url | json }} }{% unless forloop.last %},{% endunless %}
+      {%- endfor -%}
+    ]
+  </script>
+
+  <script type="application/json" data-pdp-current>
+    { "handle": {{ product.handle | json }}, "index": {{ current_idx }} }
+  </script>
+</div>
+
+<script src="{{ 'product-showcase.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Product showcase",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Navigation collection (swipe between products in this collection)"
+    },
+    {
+      "type": "text",
+      "id": "mystery_handle",
+      "label": "Mystery product handle",
+      "info": "The handle of the product that triggers the mystery carousel button"
+    },
+    {
+      "type": "collection",
+      "id": "mystery_collection",
+      "label": "Mystery carousel items"
+    },
+    {
+      "type": "richtext",
+      "id": "shipping_text",
+      "label": "Shipping text",
+      "default": "<p>Our estimated domestic shipping time is <strong>7-12 days</strong> depending on delays.</p>"
+    }
+  ]
+}
+{% endschema %}

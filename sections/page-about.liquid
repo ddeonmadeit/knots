@@ -1,0 +1,40 @@
+{%- liquid
+  assign title = section.settings.title | default: page.title
+-%}
+<div class="text-page">
+  <main class="text-page__main">
+    <h1 class="text-page__title">{{ title }}</h1>
+    <div class="text-page__content">
+      {%- if section.settings.body != blank -%}
+        {{ section.settings.body }}
+      {%- elsif page.content != blank -%}
+        {{ page.content }}
+      {%- else -%}
+        <p>Knots is a return to balance.</p>
+        <p>Our clothing is crafted by combining natural elements with urban streetwear, embodying the harmony of nature and tradition.</p>
+        <p>At our core is connection</p>
+        <p>Connections between each other, and to the world around us. Community is the foundation of everything we create.</p>
+        <p>Our designs are made to offer not just comfort, but a deeper sense of belonging and presence—reminding us that we are part of something greater.</p>
+        <p>Within the rush of life, there is always space to breathe, to pause, and to return to what is real.</p>
+        <p>Knots is more than what you wear—it's a pathway home.</p>
+      {%- endif -%}
+    </div>
+  </main>
+
+  <div class="explore-btn-wrap">
+    <a href="{{ routes.root_url }}" class="explore-btn">Explore</a>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "About page",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Title", "default": "About" },
+    { "type": "richtext", "id": "body", "label": "Body copy (leave empty to use page content)" }
+  ],
+  "presets": [
+    { "name": "About page" }
+  ]
+}
+{% endschema %}

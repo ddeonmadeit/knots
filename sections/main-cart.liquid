@@ -1,0 +1,48 @@
+<div class="simple-list">
+  <h1 class="simple-list__title">{{ 'sections.cart.title' | t }}</h1>
+  {% if cart.item_count == 0 %}
+    <p style="font-size: 13px; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: .1em; font-family: var(--font-body);">
+      {{ 'sections.cart.empty' | t }}
+    </p>
+    <p style="margin-top: 24px;"><a href="{{ routes.root_url }}" style="text-decoration: underline;">Continue shopping</a></p>
+  {% else %}
+    <form action="{{ routes.cart_url }}" method="post" novalidate>
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        {% for item in cart.items %}
+          <div style="display: grid; grid-template-columns: 96px 1fr auto; gap: 20px; align-items: center; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 20px;">
+            <div>
+              {% if item.image %}
+                <img src="{{ item.image | image_url: width: 200 }}" alt="{{ item.title | escape }}" style="width: 100%; height: auto;">
+              {% endif %}
+            </div>
+            <div style="font-family: var(--font-body);">
+              <a href="{{ item.url }}" style="text-transform: uppercase; letter-spacing: .08em; font-size: 12px; font-weight: 500;">{{ item.product.title }}</a>
+              <p style="font-size: 11px; color: hsl(var(--muted-foreground)); margin-top: 4px;">
+                {%- for opt in item.variant.selected_options -%}{{ opt.value }}{% unless forloop.last %} / {% endunless %}{%- endfor -%}
+              </p>
+              <p style="font-size: 12px; margin-top: 6px;">{{ item.final_price | money_without_trailing_zeros }}</p>
+            </div>
+            <div style="font-family: var(--font-body); font-size: 12px;">
+              <input type="number" name="updates[]" value="{{ item.quantity }}" min="0" style="width: 56px; padding: 6px; border: 1px solid hsl(var(--border)); background: transparent; text-align: center;">
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px; font-family: var(--font-body);">
+        <span style="text-transform: uppercase; letter-spacing: .15em; font-size: 12px;">Total</span>
+        <span style="font-size: 18px; font-weight: 500;">{{ cart.total_price | money_without_trailing_zeros }}</span>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button type="submit" name="update" style="padding: 12px 24px; border: 1px solid hsl(var(--border)); background: transparent; text-transform: uppercase; letter-spacing: .15em; font-size: 12px; font-family: var(--font-body);">Update</button>
+        <button type="submit" name="checkout" style="padding: 12px 32px; background: hsl(var(--foreground)); color: hsl(var(--background)); text-transform: uppercase; letter-spacing: .15em; font-size: 12px; font-family: var(--font-body);">{{ 'sections.cart.checkout' | t }}</button>
+      </div>
+    </form>
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "Cart page",
+  "settings": []
+}
+{% endschema %}

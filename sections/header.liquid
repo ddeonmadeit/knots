@@ -1,0 +1,102 @@
+{%- liquid
+  assign is_home = false
+  if template.name == 'index'
+    assign is_home = true
+  endif
+  assign sticky = section.settings.sticky
+  assign glass  = section.settings.glass_effect
+-%}
+
+<button
+  type="button"
+  class="site-header__menu-toggle"
+  data-menu-toggle
+  aria-label="{{ 'sections.header.menu' | t }}"
+>
+  <span data-icon-plus>{% render 'icon-plus' %}</span>
+  <span data-icon-close hidden>{% render 'icon-close' %}</span>
+</button>
+
+<header
+  class="site-header{% if sticky %} site-header--sticky{% else %} site-header--static{% endif %}"
+  data-site-header
+  data-sticky="{{ sticky }}"
+  data-glass="{{ glass }}"
+>
+  <div class="site-header__inner">
+    <div class="site-header__spacer"></div>
+
+    <a href="{{ routes.root_url }}" class="site-header__logo{% if is_home %} logo-bounce{% endif %}" data-header-logo>
+      {%- if section.settings.logo != blank -%}
+        <img
+          src="{{ section.settings.logo | image_url: width: 400 }}"
+          alt="{{ shop.name | escape }}"
+          width="{{ section.settings.logo.width }}"
+          height="{{ section.settings.logo.height }}"
+          loading="eager"
+        >
+      {%- else -%}
+        <span style="font-family: var(--font-display); font-weight: 700; letter-spacing: .2em; text-transform: uppercase; font-size: 14px;">
+          {{ shop.name }}
+        </span>
+      {%- endif -%}
+    </a>
+
+    {% render 'cart-drawer' %}
+  </div>
+</header>
+
+<!-- Side menu -->
+<div class="side-menu-overlay" data-menu-overlay></div>
+<aside class="side-menu" data-side-menu aria-label="{{ 'sections.header.menu' | t }}">
+  <div class="side-menu__inner">
+    {%- if section.settings.logo != blank -%}
+      <div class="side-menu__logo">
+        <img src="{{ section.settings.logo | image_url: width: 200 }}" alt="{{ shop.name | escape }}">
+      </div>
+    {%- endif -%}
+    <nav class="side-menu__nav">
+      {%- for link in section.settings.menu.links -%}
+        <a
+          href="{{ link.url }}"
+          class="side-menu__link{% if link.active %} is-active{% endif %}"
+        >{{ link.title }}</a>
+      {%- else -%}
+        <a href="{{ routes.root_url }}" class="side-menu__link is-active">{{ 'sections.header.store' | t }}</a>
+        <a href="/pages/about" class="side-menu__link">{{ 'sections.header.about' | t }}</a>
+        <a href="/pages/contact" class="side-menu__link">{{ 'sections.header.contact' | t }}</a>
+      {%- endfor -%}
+    </nav>
+  </div>
+</aside>
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo (GIF recommended)"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "default": "main-menu",
+      "label": "Menu"
+    },
+    {
+      "type": "checkbox",
+      "id": "sticky",
+      "label": "Sticky header",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "glass_effect",
+      "label": "Glass effect on scroll",
+      "default": true
+    }
+  ]
+}
+{% endschema %}
