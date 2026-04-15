@@ -8,11 +8,13 @@
   let current = parseInt(grid.dataset.cols || '3', 10);
 
   function setCols(n) {
-    current = Math.max(min, Math.min(max, n));
+    const clamped = Math.max(min, Math.min(max, n));
+    if (clamped === current) return;
+    current = clamped;
     grid.dataset.cols = current;
   }
 
-  // -------- Touch pinch --------
+  // -------- Touch pinch (only active once a 2-finger gesture begins on the grid) --------
   let lastDist = null;
   const threshold = 40;
 
@@ -22,29 +24,30 @@
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  document.addEventListener('touchstart', function (e) {
+  // Listen on the grid, not the document — keeps normal scrolling fast.
+  grid.addEventListener('touchstart', function (e) {
     if (e.touches.length === 2) lastDist = dist(e.touches);
   }, { passive: true });
 
-  document.addEventListener('touchmove', function (e) {
-    if (e.touches.length === 2) {
-      e.preventDefault();
-      if (lastDist == null) return;
-      const d = dist(e.touches);
-      const delta = d - lastDist;
-      if (Math.abs(delta) > threshold) {
-        // pinch in (shrink) → more cols; pinch out (spread) → fewer cols
-        if (delta > 0) setCols(current - 1);
-        else setCols(current + 1);
-        lastDist = d;
-      }
+  grid.addEventListener('touchmove', function (e) {
+    if (e.touches.length !== 2 || lastDist == null) return;
+    e.preventDefault();
+    const d = dist(e.touches);
+    const delta = d - lastDist;
+    if (Math.abs(delta) > threshold) {
+      if (delta > 0) setCols(current - 1);
+      else setCols(current + 1);
+      lastDist = d;
     }
   }, { passive: false });
 
-  document.addEventListener('touchend', function () { lastDist = null; });
+  grid.addEventListener('touchend', function () { lastDist = null; }, { passive: true });
+  grid.addEventListener('touchcancel', function () { lastDist = null; }, { passive: true });
 
-  // -------- Desktop ctrl+wheel --------
-  document.addEventListener('wheel', function (e) {
+  // -------- Desktop ctrl/cmd + wheel --------
+  // Registered on window with passive:false (we need preventDefault when ctrl is held),
+  // but we early-return when ctrl/cmd is NOT held so normal scrolling is not blocked.
+  window.addEventListener('wheel', function (e) {
     if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
     if (e.deltaY < 0) setCols(current - 1);

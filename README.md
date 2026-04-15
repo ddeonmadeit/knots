@@ -29,6 +29,11 @@ locales/       en.default.json
 1. **Logo**: Upload your `logo.gif` (or PNG) in *Theme editor → Header → Logo*.
 2. **Pages**: Create two CMS pages with handles `about` and `contact`.
    They will automatically pick up `page.about.json` / `page.contact.json`.
+2a. **Menu**: In *Navigation → Main menu*, keep only three items — `Store`
+    (linked to the homepage), `About` (→ `/pages/about`), and `Contact`
+    (→ `/pages/contact`). Or leave the Header → Menu setting empty in the
+    theme editor and the theme falls back to those three links
+    automatically.
 3. **Homepage grid**: In *Theme editor → Home page → Product grid*, pick the
    collection to feature (maps to Lovable's `collection:MAIN`).
 4. **Product showcase**: In *Theme editor → Product pages → Product showcase*,
@@ -49,6 +54,23 @@ locales/       en.default.json
   +/eye/mystery buttons to toggle panels.
 - Selecting a variant auto-adds to cart via `/cart/add.js` (no button needed).
 - Contact form posts to Shopify's native `contact` form (replaces Supabase).
+
+## Performance notes
+
+- The homepage uses **native document scroll** (not a nested scroll
+  container). URL bar hides on iOS/Android as you scroll, trackpad
+  overscroll works, and everything feels snappier.
+- Product-detail pages are intentionally viewport-locked (`body.template-
+  product { overflow: hidden }`) because the UX is swipe-between-products,
+  not scroll.
+- Product-card fade-in stagger is capped at 8 × 20 ms (~160 ms max) so
+  the grid doesn't look empty for 1.5 s on large stores.
+- Only the first four products load eagerly; the rest are lazy. The first
+  card also gets `fetchpriority="high"`.
+- Google Fonts are loaded non-render-blocking via the `media="print"
+  onload` trick with a `<noscript>` fallback.
+- Pinch-to-zoom gestures on the home grid are scoped to the grid element
+  (not the whole document) so they don't slow down normal scrolling.
 
 ## Differences vs the React app
 

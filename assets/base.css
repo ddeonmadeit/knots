@@ -47,15 +47,8 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
-  touch-action: pan-x pan-y;
-  height: 100%;
-  overflow: hidden;
-  overscroll-behavior: none;
-  padding-top: env(safe-area-inset-top);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -63,14 +56,26 @@ body {
   font-family: var(--font-body);
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  overscroll-behavior: none;
-  overflow: hidden;
-  height: 100%;
+  overscroll-behavior-y: none;
   font-size: 14px;
   line-height: 1.5;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
-main { height: 100%; }
+/* Product detail page is viewport-locked (swipe-between-products UI). */
+body.template-product {
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+}
+
+main { min-height: 100vh; min-height: 100dvh; }
+body.template-product main { height: 100%; }
+
+/* Lock scroll when menu or cart drawer is open */
+body.menu-open,
+body.cart-open { overflow: hidden; }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
@@ -486,8 +491,6 @@ input, textarea, select {
    HOMEPAGE — product grid
 ================================================================ */
 .home-scroll {
-  height: 100%;
-  overflow-y: auto;
   background: hsl(var(--background));
 }
 .home-spacer { height: 48px; }
@@ -510,8 +513,10 @@ input, textarea, select {
 
 .product-card {
   display: block;
-  animation: fade-in .4s ease-out forwards;
-  opacity: 0;
+  animation: fade-in .35s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-card { animation: none; }
 }
 .product-card__inner {
   display: flex;
@@ -532,9 +537,11 @@ input, textarea, select {
   max-height: 95%;
   object-fit: contain;
   transition: transform .5s cubic-bezier(.4,0,.2,1);
+}
+.product-card:hover .product-card__image {
+  transform: scale(1.03);
   will-change: transform;
 }
-.product-card:hover .product-card__image { transform: scale(1.03); }
 .product-card__name {
   margin-top: 4px;
   text-align: center;
@@ -910,10 +917,9 @@ input, textarea, select {
    SIMPLE TEXT PAGES (About, Contact)
 ================================================================ */
 .text-page {
-  min-height: 100%;
+  min-height: 100vh;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  overflow-y: auto;
   position: relative;
 }
 .text-page__main {
@@ -1055,7 +1061,7 @@ input, textarea, select {
 ================================================================ */
 .page-404 {
   display: flex;
-  min-height: 100%;
+  min-height: 100vh;
   align-items: center;
   justify-content: center;
   background: hsl(var(--muted));
@@ -1084,8 +1090,6 @@ input, textarea, select {
   padding: 80px 24px 64px;
   max-width: 1280px;
   margin: 0 auto;
-  overflow-y: auto;
-  height: 100%;
 }
 .simple-list__title {
   font-family: var(--font-display);
@@ -1105,7 +1109,7 @@ input, textarea, select {
 /* Password page */
 .password-main {
   display: flex;
-  min-height: 100%;
+  min-height: 100vh;
   align-items: center;
   justify-content: center;
   padding: 40px;

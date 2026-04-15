@@ -77,14 +77,16 @@
 
   // -------- Glass header on scroll --------
   if (header && header.dataset.sticky === 'true' && header.dataset.glass === 'true') {
-    const mainScroll = document.querySelector('[data-home-scroll]') || window;
-    const target = mainScroll === window ? window : mainScroll;
-
+    let ticking = false;
     function onScroll() {
-      const y = target === window ? window.scrollY : target.scrollTop;
-      header.classList.toggle('site-header--glass', y > 10);
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        header.classList.toggle('site-header--glass', window.scrollY > 10);
+        ticking = false;
+      });
     }
-    target.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
   }
 
