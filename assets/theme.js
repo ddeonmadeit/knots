@@ -77,16 +77,21 @@
 
   // -------- Glass header on scroll --------
   if (header && header.dataset.sticky === 'true' && header.dataset.glass === 'true') {
+    const scroller = document.querySelector('[data-home-scroll]')
+      || document.querySelector('.text-page')
+      || document.querySelector('.simple-list')
+      || window;
     let ticking = false;
     function onScroll() {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        header.classList.toggle('site-header--glass', window.scrollY > 10);
+        const y = scroller === window ? window.scrollY : scroller.scrollTop;
+        header.classList.toggle('site-header--glass', y > 10);
         ticking = false;
       });
     }
-    window.addEventListener('scroll', onScroll, { passive: true });
+    scroller.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
   }
 

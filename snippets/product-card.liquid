@@ -33,18 +33,10 @@
   endif
 -%}
 
-{%- liquid
-  # Cap fade-in stagger so below-fold cards don't wait seconds to appear.
-  assign delay_steps = index
-  if delay_steps > 8
-    assign delay_steps = 8
-  endif
-  assign delay_ms = delay_steps | times: 20
--%}
 <a
   href="{{ product.url }}"
   class="product-card"
-  style="animation-delay: {{ delay_ms }}ms;"
+  style="animation-delay: {{ index | times: 30 }}ms;"
 >
   <div class="product-card__inner">
     <div class="product-card__image-wrap">
@@ -59,7 +51,7 @@
           "
           sizes="(max-width: 640px) 50vw, 25vw"
           alt="{{ img.alt | default: product.title | escape }}"
-          loading="{% if index < 4 %}eager{% else %}lazy{% endif %}"
+          loading="{% if index < 9 %}eager{% else %}lazy{% endif %}"
           {% if index == 0 %}fetchpriority="high"{% endif %}
           draggable="false"
           decoding="async"

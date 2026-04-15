@@ -55,17 +55,25 @@
         <img src="{{ section.settings.logo | image_url: width: 200 }}" alt="{{ shop.name | escape }}">
       </div>
     {%- endif -%}
+    {%- liquid
+      # Hardcoded to match the Lovable reference site exactly:
+      # Home, About, Contact — nothing else. This avoids leaking Shopify's
+      # default main-menu items (Events, special-char pages, etc).
+      assign current_path = request.path
+    -%}
     <nav class="side-menu__nav">
-      {%- for link in section.settings.menu.links -%}
-        <a
-          href="{{ link.url }}"
-          class="side-menu__link{% if link.active %} is-active{% endif %}"
-        >{{ link.title }}</a>
-      {%- else -%}
-        <a href="{{ routes.root_url }}" class="side-menu__link is-active">{{ 'sections.header.store' | t }}</a>
-        <a href="/pages/about" class="side-menu__link">{{ 'sections.header.about' | t }}</a>
-        <a href="/pages/contact" class="side-menu__link">{{ 'sections.header.contact' | t }}</a>
-      {%- endfor -%}
+      <a
+        href="{{ routes.root_url }}"
+        class="side-menu__link{% if template.name == 'index' %} is-active{% endif %}"
+      >{{ 'sections.header.home' | t | default: 'Home' }}</a>
+      <a
+        href="/pages/about"
+        class="side-menu__link{% if current_path contains '/pages/about' %} is-active{% endif %}"
+      >{{ 'sections.header.about' | t | default: 'About' }}</a>
+      <a
+        href="/pages/contact"
+        class="side-menu__link{% if current_path contains '/pages/contact' %} is-active{% endif %}"
+      >{{ 'sections.header.contact' | t | default: 'Contact' }}</a>
     </nav>
   </div>
 </aside>
@@ -78,12 +86,6 @@
       "type": "image_picker",
       "id": "logo",
       "label": "Logo (GIF recommended)"
-    },
-    {
-      "type": "link_list",
-      "id": "menu",
-      "default": "main-menu",
-      "label": "Menu"
     },
     {
       "type": "checkbox",

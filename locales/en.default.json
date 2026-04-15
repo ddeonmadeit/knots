@@ -6,6 +6,7 @@
   "sections": {
     "header": {
       "menu": "Menu",
+      "home": "Home",
       "store": "Store",
       "about": "About",
       "contact": "Contact"
