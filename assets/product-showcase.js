@@ -5,7 +5,7 @@
   const pageCache = new Map();
   let isTransitioning = false;
   let lastNav = 0;
-  const NAV_COOLDOWN = 300;
+  const NAV_COOLDOWN = 450;
 
   const state = {
     images: [],
@@ -230,18 +230,23 @@
 
   function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  async function swapProduct(newPdp, url, newTitle, push) {
-    pdp.classList.add('pdp--fading');
-    await wait(180);
+  async function swapProduct(newPdp, url, newTitle, direction) {
+    const dir = direction || 'up';
+
+    pdp.dataset.transition = 'out-' + dir;
+    await wait(280);
 
     pdp.innerHTML = newPdp.innerHTML;
     pdp.dataset.productHandle = newPdp.dataset.productHandle;
-
     document.title = newTitle;
-    if (push) history.pushState({ handle: newPdp.dataset.productHandle }, '', url);
+    history.replaceState(null, '', url);
 
+    pdp.dataset.transition = 'in-' + dir;
     hydrate(pdp);
-    pdp.classList.remove('pdp--fading');
+    pdp.offsetHeight;
+
+    pdp.dataset.transition = '';
+    await wait(320);
   }
 
   async function goToProduct(dir) {
@@ -258,7 +263,7 @@
       const html = await fetchProduct(entry.url);
       const { newPdp, newTitle } = parseProduct(html);
       if (!newPdp) { isTransitioning = false; return; }
-      await swapProduct(newPdp, entry.url, newTitle, true);
+      await swapProduct(newPdp, entry.url, newTitle, dir > 0 ? 'up' : 'down');
     } catch (e) {
       console.error('Product nav failed', e);
     }
@@ -380,21 +385,10 @@
     }
   }, { passive: true });
 
-  // Popstate (browser back/forward)
-  window.addEventListener('popstate', async (e) => {
+  // Popstate — with replaceState nav, back goes to homepage
+  window.addEventListener('popstate', () => {
     if (!document.body.classList.contains('template-product')) return;
-    if (isTransitioning) return;
-    isTransitioning = true;
-    try {
-      const url = location.pathname;
-      const html = await fetchProduct(url);
-      const { newPdp, newTitle } = parseProduct(html);
-      if (newPdp) await swapProduct(newPdp, url, newTitle, false);
-    } catch (e) {
-      console.error('Popstate nav failed', e);
-      location.reload();
-    }
-    isTransitioning = false;
+    location.reload();
   });
 
   // -------- Initial hydrate + cache current page --------
