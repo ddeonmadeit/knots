@@ -1,9 +1,6 @@
 {%- liquid
-  assign collection_handle = section.settings.collection
+  assign collection_handle = section.settings.collection | default: 'main'
   assign coll = collections[collection_handle]
-  if coll.products.size == 0
-    assign coll = collections.all
-  endif
   assign nav_products = coll.products
   assign mystery_handle = section.settings.mystery_handle | default: ''
   assign is_mystery = false
@@ -212,7 +209,12 @@
   <script type="application/json" data-pdp-nav>
     [
       {%- for p in nav_products -%}
-        { "handle": {{ p.handle | json }}, "url": {{ p.url | json }} }{% unless forloop.last %},{% endunless %}
+        {
+          "handle": {{ p.handle | json }},
+          "url": {{ p.url | json }},
+          "preview": {{ p.featured_image | image_url: width: 1400 | json }},
+          "title": {{ p.title | json }}
+        }{% unless forloop.last %},{% endunless %}
       {%- endfor -%}
     ]
   </script>

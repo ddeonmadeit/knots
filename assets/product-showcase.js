@@ -1,123 +1,108 @@
-/* Product showcase behaviour:
-   - Swipe / wheel left-right to change image
-   - Swipe / wheel up-down to change product (via collection nav)
-   - +/Eye/Mystery buttons toggle panels
-   - Selecting a complete variant triggers AJAX add-to-cart
-*/
 (function () {
   const pdp = document.querySelector('[data-pdp]');
   if (!pdp) return;
 
-  // -------- Parse JSON data --------
-  const images = JSON.parse(pdp.querySelector('[data-pdp-images]').textContent || '[]');
-  const navList = JSON.parse(pdp.querySelector('[data-pdp-nav]').textContent || '[]');
-  const current = JSON.parse(pdp.querySelector('[data-pdp-current]').textContent || '{}');
-  const variantMapEl = pdp.querySelector('[data-variant-map]');
-  const variants = variantMapEl ? JSON.parse(variantMapEl.textContent || '[]') : [];
-
-  const imgEl = pdp.querySelector('[data-pdp-image]');
-  const dots = pdp.querySelectorAll('[data-dot]');
-  const imageArea = pdp.querySelector('[data-image-area]');
-  const body = pdp.querySelector('[data-pdp-body]');
-  const panelsWrap = pdp.querySelector('[data-pdp-panels]');
-  const sizesPanel = pdp.querySelector('[data-pdp-sizes]');
-  const detailsPanel = pdp.querySelector('[data-pdp-details]');
-  const mysteryPanel = pdp.querySelector('[data-pdp-mystery]');
-
-  let imageIndex = 0;
+  const pageCache = new Map();
   let isTransitioning = false;
   let lastNav = 0;
-  const NAV_COOLDOWN = 260;
+  const NAV_COOLDOWN = 300;
+
+  const state = {
+    images: [],
+    navList: [],
+    current: {},
+    variants: [],
+    imgEl: null,
+    dots: [],
+    imageArea: null,
+    body: null,
+    panelsWrap: null,
+    sizesPanel: null,
+    detailsPanel: null,
+    mysteryPanel: null,
+    selectedOptions: {},
+    showSizes: false,
+    showDetails: false,
+    showMystery: false,
+    imageIndex: 0
+  };
+
+  function hydrate(root) {
+    state.images = JSON.parse(root.querySelector('[data-pdp-images]').textContent || '[]');
+    state.navList = JSON.parse(root.querySelector('[data-pdp-nav]').textContent || '[]');
+    state.current = JSON.parse(root.querySelector('[data-pdp-current]').textContent || '{}');
+    const variantMapEl = root.querySelector('[data-variant-map]');
+    state.variants = variantMapEl ? JSON.parse(variantMapEl.textContent || '[]') : [];
+
+    state.imgEl = root.querySelector('[data-pdp-image]');
+    state.dots = root.querySelectorAll('[data-dot]');
+    state.imageArea = root.querySelector('[data-image-area]');
+    state.body = root.querySelector('[data-pdp-body]');
+    state.panelsWrap = root.querySelector('[data-pdp-panels]');
+    state.sizesPanel = root.querySelector('[data-pdp-sizes]');
+    state.detailsPanel = root.querySelector('[data-pdp-details]');
+    state.mysteryPanel = root.querySelector('[data-pdp-mystery]');
+    state.imageIndex = 0;
+    state.showSizes = false;
+    state.showDetails = false;
+    state.showMystery = false;
+    state.selectedOptions = {};
+
+    syncPanels();
+    bindScopedListeners(root);
+    updateIndicators();
+    preloadNeighbors();
+  }
 
   // -------- Image navigation --------
   function goToImage(dir) {
-    if (images.length <= 1) return;
-    const next = (imageIndex + dir + images.length) % images.length;
-    imageIndex = next;
-    if (imgEl && images[next]) {
-      imgEl.classList.add('is-loading');
-      imgEl.src = images[next].url;
-      imgEl.alt = images[next].alt || '';
-      imgEl.onload = () => imgEl.classList.remove('is-loading');
+    if (state.images.length <= 1) return;
+    const next = (state.imageIndex + dir + state.images.length) % state.images.length;
+    state.imageIndex = next;
+    if (state.imgEl && state.images[next]) {
+      state.imgEl.classList.add('is-loading');
+      state.imgEl.src = state.images[next].url;
+      state.imgEl.alt = state.images[next].alt || '';
+      state.imgEl.onload = () => state.imgEl.classList.remove('is-loading');
     }
-    dots.forEach((d, i) => d.classList.toggle('is-active', i === next));
-  }
-
-  // -------- Product navigation (jump to next/prev product URL) --------
-  function goToProduct(dir) {
-    const target = current.index + dir;
-    if (target < 0 || target >= navList.length) return;
-    const now = Date.now();
-    if (now - lastNav < 450) return;
-    lastNav = now;
-    window.location.href = navList[target].url;
+    state.dots.forEach((d, i) => d.classList.toggle('is-active', i === next));
   }
 
   // -------- Panel toggles --------
-  let showSizes = false, showDetails = false, showMystery = false;
-
   function syncPanels() {
-    const anyOpen = showSizes || showDetails || showMystery;
-    panelsWrap.hidden = !anyOpen;
-    body.classList.toggle('panels-open', anyOpen);
+    const anyOpen = state.showSizes || state.showDetails || state.showMystery;
+    if (state.panelsWrap) state.panelsWrap.hidden = !anyOpen;
+    if (state.body) state.body.classList.toggle('panels-open', anyOpen);
 
-    if (sizesPanel) sizesPanel.hidden = !showSizes;
-    if (detailsPanel) detailsPanel.hidden = !showDetails;
-    if (mysteryPanel) mysteryPanel.hidden = !showMystery;
+    if (state.sizesPanel) state.sizesPanel.hidden = !state.showSizes;
+    if (state.detailsPanel) state.detailsPanel.hidden = !state.showDetails;
+    if (state.mysteryPanel) state.mysteryPanel.hidden = !state.showMystery;
 
-    // Plus/minus icon swap
     const plus = pdp.querySelector('[data-sizes-plus]');
     const minus = pdp.querySelector('[data-sizes-minus]');
-    if (plus && minus) { plus.hidden = showSizes; minus.hidden = !showSizes; }
-    // Eye on/off swap
+    if (plus && minus) { plus.hidden = state.showSizes; minus.hidden = !state.showSizes; }
+
     const on = pdp.querySelector('[data-details-on]');
     const off = pdp.querySelector('[data-details-off]');
-    if (on && off) { on.hidden = showDetails; off.hidden = !showDetails; }
+    if (on && off) { on.hidden = state.showDetails; off.hidden = !state.showDetails; }
 
     const mysteryBtn = pdp.querySelector('[data-toggle-mystery]');
-    if (mysteryBtn) mysteryBtn.classList.toggle('is-active', showMystery);
+    if (mysteryBtn) mysteryBtn.classList.toggle('is-active', state.showMystery);
   }
 
-  const sizesBtn = pdp.querySelector('[data-toggle-sizes]');
-  if (sizesBtn) sizesBtn.addEventListener('click', () => {
-    showSizes = !showSizes;
-    if (showSizes) resetSelectedOptions();
-    syncPanels();
-  });
-
-  const detailsBtn = pdp.querySelector('[data-toggle-details]');
-  if (detailsBtn) detailsBtn.addEventListener('click', () => {
-    showDetails = !showDetails;
-    syncPanels();
-  });
-
-  const mysteryBtn = pdp.querySelector('[data-toggle-mystery]');
-  if (mysteryBtn) mysteryBtn.addEventListener('click', () => {
-    showMystery = !showMystery;
-    if (showMystery && !showDetails) showDetails = true;
-    syncPanels();
-  });
-
-  // -------- Accordions inside details --------
-  pdp.querySelectorAll('[data-accordion]').forEach((acc) => {
-    const btn = acc.querySelector('.pdp__accordion-btn');
-    btn.addEventListener('click', () => {
-      const open = acc.dataset.open === 'true';
-      acc.dataset.open = open ? 'false' : 'true';
+  function updateIndicators() {
+    const indicators = document.querySelectorAll('[data-pdp-indicators] .pdp__product-indicator');
+    indicators.forEach((el, i) => {
+      el.classList.toggle('is-current', i === state.current.index);
     });
-  });
-
-  // -------- Variant selection → auto add to cart --------
-  const selectedOptions = {};
-
-  function resetSelectedOptions() {
-    Object.keys(selectedOptions).forEach(k => delete selectedOptions[k]);
-    pdp.querySelectorAll('.pdp__variant-btn').forEach(b => b.classList.remove('is-selected'));
   }
 
+  // -------- Variant selection helpers --------
   function findVariant() {
-    return variants.find(v =>
-      v.options.every(opt => selectedOptions[opt.name] === opt.value)
+    return state.variants.find(v =>
+      v.options
+        .filter(opt => opt.name !== 'Title')
+        .every(opt => state.selectedOptions[opt.name] === opt.value)
     );
   }
 
@@ -125,42 +110,10 @@
     return pdp.querySelectorAll('[data-option-name]');
   }
 
-  pdp.querySelectorAll('.pdp__variant-btn').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const optRow = btn.closest('[data-option-name]');
-      if (!optRow) return;
-      const name = optRow.dataset.optionName;
-      const value = btn.dataset.optionValue;
-      selectedOptions[name] = value;
-
-      // update UI
-      optRow.querySelectorAll('.pdp__variant-btn').forEach(b => b.classList.remove('is-selected'));
-      btn.classList.add('is-selected');
-
-      // Check all options selected
-      const allRows = requiredOptions();
-      const allFilled = Array.from(allRows).every(r => selectedOptions[r.dataset.optionName]);
-      if (!allFilled) return;
-
-      const variant = findVariant();
-      if (!variant || !variant.available) return;
-
-      // AJAX add-to-cart — numeric ID works on /cart/add.js
-      try {
-        const res = await fetch(window.theme.routes.cart_add_url + '.js', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({ id: variant.id, quantity: 1 })
-        });
-        if (res.ok) {
-          showAddedMessage();
-          window.dispatchEvent(new CustomEvent('cart:updated'));
-        }
-      } catch (e) {
-        console.error('Add to cart failed', e);
-      }
-    });
-  });
+  function resetSelectedOptions() {
+    Object.keys(state.selectedOptions).forEach(k => delete state.selectedOptions[k]);
+    pdp.querySelectorAll('.pdp__variant-btn').forEach(b => b.classList.remove('is-selected'));
+  }
 
   function showAddedMessage() {
     const msg = pdp.querySelector('[data-added-message]');
@@ -168,22 +121,221 @@
     msg.classList.add('is-visible');
     setTimeout(() => {
       msg.classList.remove('is-visible');
-      showSizes = false;
+      state.showSizes = false;
       syncPanels();
     }, 700);
   }
 
-  // -------- Touch on image area --------
+  async function addToCart(variant) {
+    if (!variant || !variant.available) return;
+    try {
+      const res = await fetch(window.theme.routes.cart_add_url + '.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ id: variant.id, quantity: 1 })
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        console.error('Add to cart failed', res.status, body);
+        return;
+      }
+      showAddedMessage();
+      window.dispatchEvent(new CustomEvent('cart:updated'));
+    } catch (e) {
+      console.error('Add to cart network error', e);
+    }
+  }
+
+  // -------- Scoped listeners (re-bound on each product swap) --------
+  function bindScopedListeners(root) {
+    const sizesBtn = root.querySelector('[data-toggle-sizes]');
+    if (sizesBtn) sizesBtn.addEventListener('click', () => {
+      state.showSizes = !state.showSizes;
+      if (state.showSizes) {
+        resetSelectedOptions();
+        const opts = requiredOptions();
+        if (opts.length === 0 && state.variants.length > 0) {
+          addToCart(state.variants.find(v => v.available) || state.variants[0]);
+        }
+      }
+      syncPanels();
+    });
+
+    const detailsBtn = root.querySelector('[data-toggle-details]');
+    if (detailsBtn) detailsBtn.addEventListener('click', () => {
+      state.showDetails = !state.showDetails;
+      syncPanels();
+    });
+
+    const mysteryBtn = root.querySelector('[data-toggle-mystery]');
+    if (mysteryBtn) mysteryBtn.addEventListener('click', () => {
+      state.showMystery = !state.showMystery;
+      if (state.showMystery && !state.showDetails) state.showDetails = true;
+      syncPanels();
+    });
+
+    root.querySelectorAll('[data-accordion]').forEach((acc) => {
+      const btn = acc.querySelector('.pdp__accordion-btn');
+      if (btn) btn.addEventListener('click', () => {
+        acc.dataset.open = acc.dataset.open === 'true' ? 'false' : 'true';
+      });
+    });
+
+    root.querySelectorAll('.pdp__variant-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const optRow = btn.closest('[data-option-name]');
+        if (!optRow) return;
+        const name = optRow.dataset.optionName;
+        const value = btn.dataset.optionValue;
+        state.selectedOptions[name] = value;
+
+        optRow.querySelectorAll('.pdp__variant-btn').forEach(b => b.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+
+        const allRows = requiredOptions();
+        const allFilled = Array.from(allRows).every(r => state.selectedOptions[r.dataset.optionName]);
+        if (!allFilled) return;
+
+        const variant = findVariant();
+        if (!variant) {
+          console.warn('No variant matched for', state.selectedOptions);
+          return;
+        }
+        await addToCart(variant);
+      });
+    });
+
+    state.dots.forEach((d, i) => d.addEventListener('click', () => {
+      const dir = i - state.imageIndex;
+      if (dir !== 0) goToImage(dir > 0 ? 1 : -1);
+    }));
+  }
+
+  // -------- Client-side product navigation --------
+  async function fetchProduct(url) {
+    if (pageCache.has(url)) return pageCache.get(url);
+    const res = await fetch(url, { headers: { 'Accept': 'text/html' } });
+    if (!res.ok) throw new Error('Fetch failed: ' + res.status);
+    const html = await res.text();
+    pageCache.set(url, html);
+    return html;
+  }
+
+  function parseProduct(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const newPdp = doc.querySelector('[data-pdp]');
+    const newTitle = doc.querySelector('title')?.textContent || '';
+    return { newPdp, newTitle };
+  }
+
+  function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function swapProduct(newPdp, url, newTitle, push) {
+    pdp.classList.add('pdp--fading');
+    await wait(180);
+
+    pdp.innerHTML = newPdp.innerHTML;
+    pdp.dataset.productHandle = newPdp.dataset.productHandle;
+
+    document.title = newTitle;
+    if (push) history.pushState({ handle: newPdp.dataset.productHandle }, '', url);
+
+    hydrate(pdp);
+    pdp.classList.remove('pdp--fading');
+  }
+
+  async function goToProduct(dir) {
+    if (isTransitioning) return;
+    const target = state.current.index + dir;
+    if (target < 0 || target >= state.navList.length) return;
+    const now = Date.now();
+    if (now - lastNav < NAV_COOLDOWN) return;
+    lastNav = now;
+    isTransitioning = true;
+
+    try {
+      const entry = state.navList[target];
+      const html = await fetchProduct(entry.url);
+      const { newPdp, newTitle } = parseProduct(html);
+      if (!newPdp) { isTransitioning = false; return; }
+      await swapProduct(newPdp, entry.url, newTitle, true);
+    } catch (e) {
+      console.error('Product nav failed', e);
+    }
+    isTransitioning = false;
+  }
+
+  function preloadNeighbors() {
+    const idx = state.current.index;
+    [-1, 1].forEach(d => {
+      const n = idx + d;
+      if (n >= 0 && n < state.navList.length) {
+        const entry = state.navList[n];
+        if (entry.preview) new Image().src = entry.preview;
+        if (!pageCache.has(entry.url)) {
+          fetch(entry.url, { headers: { 'Accept': 'text/html' } })
+            .then(r => r.ok ? r.text() : null)
+            .then(html => { if (html) pageCache.set(entry.url, html); })
+            .catch(() => {});
+        }
+      }
+    });
+  }
+
+  // -------- Persistent listeners (bound once) --------
+
+  // Wheel navigation
+  window.addEventListener('wheel', (e) => {
+    if (!document.body.classList.contains('template-product')) return;
+    if (isTransitioning) { e.preventDefault(); return; }
+    const onImage = state.imageArea && state.imageArea.contains(e.target);
+
+    if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      e.preventDefault();
+      const now = Date.now();
+      if (now - lastNav < NAV_COOLDOWN) return;
+      lastNav = now;
+      goToImage((e.deltaX || e.deltaY) > 0 ? 1 : -1);
+      return;
+    }
+
+    const anyOpen = state.showSizes || state.showDetails || state.showMystery;
+    if (anyOpen && !onImage) return;
+    if (Math.abs(e.deltaY) < 8) return;
+    e.preventDefault();
+    goToProduct(e.deltaY > 0 ? 1 : -1);
+  }, { passive: false });
+
+  // Keyboard
+  window.addEventListener('keydown', (e) => {
+    if (!document.body.classList.contains('template-product')) return;
+    if (e.key === 'ArrowLeft') goToImage(-1);
+    if (e.key === 'ArrowRight') goToImage(1);
+    if (e.key === 'ArrowUp')    { e.preventDefault(); goToProduct(-1); }
+    if (e.key === 'ArrowDown')  { e.preventDefault(); goToProduct(1); }
+    if (e.key === 'Escape') {
+      if (state.showSizes) { state.showSizes = false; syncPanels(); }
+      else if (state.showDetails) { state.showDetails = false; syncPanels(); }
+      else if (state.showMystery) { state.showMystery = false; syncPanels(); }
+      else window.location.href = window.theme.routes.root;
+    }
+  });
+
+  // Touch on image area (persistent on pdp container since imageArea gets replaced)
   let touchStartX = 0, touchStartY = 0, imageSwipeHandled = false;
 
-  if (imageArea) {
-    imageArea.addEventListener('touchstart', (e) => {
+  pdp.addEventListener('touchstart', (e) => {
+    const ia = state.imageArea;
+    if (ia && ia.contains(e.target)) {
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
       imageSwipeHandled = false;
-    }, { passive: true });
+    }
+  }, { passive: true });
 
-    imageArea.addEventListener('touchend', (e) => {
+  pdp.addEventListener('touchend', (e) => {
+    const ia = state.imageArea;
+    if (ia && ia.contains(e.target)) {
       const dx = touchStartX - e.changedTouches[0].clientX;
       const dy = touchStartY - e.changedTouches[0].clientY;
       const adx = Math.abs(dx), ady = Math.abs(dy);
@@ -195,11 +347,10 @@
       }
       if (ady > 60 && ady > adx) {
         imageSwipeHandled = true;
-        const anyOpen = showSizes || showDetails || showMystery;
+        const anyOpen = state.showSizes || state.showDetails || state.showMystery;
         if (!anyOpen) {
           if (dy > 0) {
-            // open details on swipe up
-            showDetails = true;
+            state.showDetails = true;
             syncPanels();
           } else {
             goToProduct(-1);
@@ -207,61 +358,46 @@
         } else {
           goToProduct(dy > 0 ? 1 : -1);
         }
+        return;
       }
-    });
-  }
+    }
 
-  // -------- Page-level touch for product nav when no panels open --------
-  let pageStartY = 0;
-  pdp.addEventListener('touchstart', (e) => {
-    pageStartY = e.touches[0].clientY;
-  }, { passive: true });
-  pdp.addEventListener('touchend', (e) => {
-    const anyOpen = showSizes || showDetails || showMystery;
-    if (anyOpen || imageSwipeHandled) { imageSwipeHandled = false; return; }
-    const dy = pageStartY - e.changedTouches[0].clientY;
+    // Page-level touch for product nav
+    if (imageSwipeHandled) { imageSwipeHandled = false; return; }
+    const anyOpen = state.showSizes || state.showDetails || state.showMystery;
+    if (anyOpen) return;
+    const dy = touchStartY - e.changedTouches[0].clientY;
     if (dy > 60) goToProduct(1);
     else if (dy < -60) goToProduct(-1);
   });
 
-  // -------- Wheel navigation --------
-  window.addEventListener('wheel', (e) => {
-    if (isTransitioning) { e.preventDefault(); return; }
-    const onImage = imageArea && imageArea.contains(e.target);
-
-    if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-      e.preventDefault();
-      const now = Date.now();
-      if (now - lastNav < NAV_COOLDOWN) return;
-      lastNav = now;
-      goToImage((e.deltaX || e.deltaY) > 0 ? 1 : -1);
-      return;
+  // Page-level touchstart (always track Y for page swipe)
+  let pageStartY = 0;
+  pdp.addEventListener('touchstart', (e) => {
+    pageStartY = e.touches[0].clientY;
+    if (!state.imageArea || !state.imageArea.contains(e.target)) {
+      touchStartY = e.touches[0].clientY;
     }
+  }, { passive: true });
 
-    const anyOpen = showSizes || showDetails || showMystery;
-    if (anyOpen && !onImage) return;
-    if (Math.abs(e.deltaY) < 8) return;
-    e.preventDefault();
-    goToProduct(e.deltaY > 0 ? 1 : -1);
-  }, { passive: false });
-
-  // -------- Keyboard --------
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') goToImage(-1);
-    if (e.key === 'ArrowRight') goToImage(1);
-    if (e.key === 'ArrowUp')    { e.preventDefault(); goToProduct(-1); }
-    if (e.key === 'ArrowDown')  { e.preventDefault(); goToProduct(1); }
-    if (e.key === 'Escape') {
-      if (showSizes) { showSizes = false; syncPanels(); }
-      else if (showDetails) { showDetails = false; syncPanels(); }
-      else if (showMystery) { showMystery = false; syncPanels(); }
-      else window.location.href = window.theme.routes.root;
+  // Popstate (browser back/forward)
+  window.addEventListener('popstate', async (e) => {
+    if (!document.body.classList.contains('template-product')) return;
+    if (isTransitioning) return;
+    isTransitioning = true;
+    try {
+      const url = location.pathname;
+      const html = await fetchProduct(url);
+      const { newPdp, newTitle } = parseProduct(html);
+      if (newPdp) await swapProduct(newPdp, url, newTitle, false);
+    } catch (e) {
+      console.error('Popstate nav failed', e);
+      location.reload();
     }
+    isTransitioning = false;
   });
 
-  // -------- Dots click --------
-  dots.forEach((d, i) => d.addEventListener('click', () => {
-    const dir = i - imageIndex;
-    if (dir !== 0) goToImage(dir > 0 ? 1 : -1);
-  }));
+  // -------- Initial hydrate + cache current page --------
+  hydrate(pdp);
+  pageCache.set(location.pathname, document.documentElement.outerHTML);
 })();

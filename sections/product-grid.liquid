@@ -1,15 +1,12 @@
 {%- liquid
-  assign collection_handle = section.settings.collection
+  assign collection_handle = section.settings.collection | default: 'main'
   assign coll = collections[collection_handle]
-  if coll.products.size == 0
-    assign coll = collections.all
-  endif
   assign products = coll.products
 
-  # Global creation-order numbering: sort every product in the store by
-  # created_at ascending, then look up each displayed product's position.
-  # First product added to the store = 001, second = 002, ...
-  assign all_sorted = collections.all.products | sort: 'created_at'
+  assign all_sorted = nil
+  if products.size > 0
+    assign all_sorted = collections.all.products | sort: 'created_at'
+  endif
 -%}
 
 <div class="home-scroll" data-home-scroll>

@@ -3,6 +3,7 @@
     "main": {
       "type": "main-product",
       "settings": {
+        "collection": "main",
         "shipping_text": "<p>Our estimated domestic shipping time is <strong>7-12 days</strong> depending on delays.</p>"
       }
     }
