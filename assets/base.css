@@ -193,8 +193,8 @@ input, textarea, select {
 /* Logo float on homepage */
 .logo-bounce { animation: logo-float 3s ease-in-out infinite; }
 @keyframes logo-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-6px); }
 }
 
 /* -------- Cart bag icon in header -------- */
@@ -503,12 +503,6 @@ input, textarea, select {
 .product-grid[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
 .product-grid[data-cols="4"] { grid-template-columns: repeat(4, 1fr); }
 .product-grid[data-cols="5"] { grid-template-columns: repeat(5, 1fr); }
-
-@media (max-width: 640px) {
-  .product-grid[data-cols="5"] { grid-template-columns: repeat(4, 1fr); }
-  .product-grid[data-cols="4"] { grid-template-columns: repeat(3, 1fr); }
-  .product-grid[data-cols="3"] { grid-template-columns: repeat(2, 1fr); }
-}
 
 .product-card {
   display: block;

@@ -57,15 +57,14 @@
     {%- endif -%}
     {%- liquid
       # Hardcoded to match the Lovable reference site exactly:
-      # Home, About, Contact — nothing else. This avoids leaking Shopify's
-      # default main-menu items (Events, special-char pages, etc).
+      # Store, About, Contact — nothing else.
       assign current_path = request.path
     -%}
     <nav class="side-menu__nav">
       <a
         href="{{ routes.root_url }}"
         class="side-menu__link{% if template.name == 'index' %} is-active{% endif %}"
-      >{{ 'sections.header.home' | t | default: 'Home' }}</a>
+      >{{ 'sections.header.store' | t | default: 'Store' }}</a>
       <a
         href="/pages/about"
         class="side-menu__link{% if current_path contains '/pages/about' %} is-active{% endif %}"

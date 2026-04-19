@@ -35,8 +35,8 @@
     const d = dist(e.touches);
     const delta = d - lastDist;
     if (Math.abs(delta) > threshold) {
-      if (delta > 0) setCols(current - 1);
-      else setCols(current + 1);
+      if (delta > 0) setCols(current + 1);
+      else setCols(current - 1);
       lastDist = d;
     }
   }, { passive: false });

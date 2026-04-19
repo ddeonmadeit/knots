@@ -49,7 +49,7 @@
             {{ img | image_url: width: 600 }} 600w,
             {{ img | image_url: width: 900 }} 900w
           "
-          sizes="(max-width: 640px) 50vw, 25vw"
+          sizes="33vw"
           alt="{{ img.alt | default: product.title | escape }}"
           loading="{% if index < 9 %}eager{% else %}lazy{% endif %}"
           {% if index == 0 %}fetchpriority="high"{% endif %}
